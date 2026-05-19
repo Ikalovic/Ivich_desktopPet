@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 from PySide6.QtCore import QPoint, QTimer, Qt, Signal
@@ -7,6 +8,9 @@ from PySide6.QtGui import QMouseEvent, QPixmap
 from PySide6.QtWidgets import QLabel, QMenu, QWidget
 
 from desktop_pet.config import AnimationConfig
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class SpriteAnimator(QWidget):
@@ -21,7 +25,13 @@ class SpriteAnimator(QWidget):
         self._loop = True
 
     def play(self, frame_paths: list[Path], config: AnimationConfig) -> bool:
-        pixmaps = [pixmap for path in frame_paths if not (pixmap := QPixmap(str(path))).isNull()]
+        pixmaps: list[QPixmap] = []
+        for path in frame_paths:
+            pixmap = QPixmap(str(path))
+            if pixmap.isNull():
+                LOGGER.warning("Animation %s could not load frame: %s", config.name, path)
+            else:
+                pixmaps.append(pixmap)
         if not pixmaps:
             self.stop()
             self._frames = []

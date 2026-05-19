@@ -7,7 +7,7 @@
       "loop": true
     },
     "walk": {
-      "pattern": "assets/character/walk/walk_%02d.png",
+      "pattern": "assets/character/walk/walk_left_%02d.png",
       "frames": 0,
       "fps": 10,
       "loop": true
