@@ -35,5 +35,8 @@ class PetStateMachine:
     def _animation_for(self, state_name: str) -> str:
         state = self._states.states.get(state_name)
         if state is None:
-            return self._states.default_state
+            default_state = self._states.states.get(self._states.default_state)
+            if default_state is None:
+                return self._states.default_state
+            return default_state.animation
         return state.animation
