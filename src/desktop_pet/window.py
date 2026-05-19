@@ -53,6 +53,8 @@ class PetWindow(QWidget):
     drag_finished = Signal()
     clicked = Signal()
 
+    _DRAG_THRESHOLD_PX = 5
+
     def __init__(self, width: int, height: int, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._label = QLabel(self)
@@ -60,6 +62,7 @@ class PetWindow(QWidget):
         self._label.setGeometry(0, 0, width, height)
         self._drag_offset: QPoint | None = None
         self._press_pos: QPoint | None = None
+        self._is_dragging = False
 
         self.setFixedSize(width, height)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
@@ -87,6 +90,7 @@ class PetWindow(QWidget):
         if event.button() == Qt.MouseButton.LeftButton:
             self._press_pos = event.globalPosition().toPoint()
             self._drag_offset = self._press_pos - self.frameGeometry().topLeft()
+            self._is_dragging = False
             event.accept()
             return
         if event.button() == Qt.MouseButton.RightButton:
@@ -96,26 +100,34 @@ class PetWindow(QWidget):
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
-        if self._drag_offset is not None and event.buttons() & Qt.MouseButton.LeftButton:
-            self.drag_started.emit()
-            self.move(event.globalPosition().toPoint() - self._drag_offset)
+        if (
+            self._press_pos is not None
+            and self._drag_offset is not None
+            and event.buttons() & Qt.MouseButton.LeftButton
+        ):
+            current_pos = event.globalPosition().toPoint()
+            if not self._is_dragging:
+                distance = (current_pos - self._press_pos).manhattanLength()
+                if distance <= self._DRAG_THRESHOLD_PX:
+                    event.accept()
+                    return
+                self._is_dragging = True
+                self.drag_started.emit()
+            self.move(current_pos - self._drag_offset)
             event.accept()
             return
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
         if event.button() == Qt.MouseButton.LeftButton:
-            release_pos = event.globalPosition().toPoint()
-            was_click = (
-                self._press_pos is not None
-                and (release_pos - self._press_pos).manhattanLength() < 5
-            )
+            was_dragging = self._is_dragging
             self._drag_offset = None
             self._press_pos = None
-            if was_click:
-                self.clicked.emit()
-            else:
+            self._is_dragging = False
+            if was_dragging:
                 self.drag_finished.emit()
+            else:
+                self.clicked.emit()
             event.accept()
             return
         super().mouseReleaseEvent(event)
