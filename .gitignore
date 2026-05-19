@@ -1,0 +1,15 @@
+.superpowers/
+__pycache__/
+.pytest_cache/
+.venv/
+venv/
+*.pyc
+*.pyo
+*.pyd
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+*.Zone.Identifier
+*:Zone.Identifier

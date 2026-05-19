@@ -1,0 +1,80 @@
+{
+  "character": {
+    "idle": {
+      "pattern": "assets/character/idle/idle_%02d.png",
+      "frames": 0,
+      "fps": 8,
+      "loop": true
+    },
+    "walk": {
+      "pattern": "assets/character/walk/walk_%02d.png",
+      "frames": 0,
+      "fps": 10,
+      "loop": true
+    },
+    "sleep": {
+      "pattern": "assets/character/sleep/sleep_%02d.png",
+      "frames": 0,
+      "fps": 4,
+      "loop": true
+    },
+    "drag": {
+      "pattern": "assets/character/drag/drag_%02d.png",
+      "frames": 0,
+      "fps": 12,
+      "loop": true
+    },
+    "fall": {
+      "pattern": "assets/character/fall/fall_%02d.png",
+      "frames": 0,
+      "fps": 14,
+      "loop": false
+    },
+    "special": {
+      "peek": {
+        "pattern": "assets/character/special/peek/peek_%02d.png",
+        "frames": 0,
+        "fps": 8,
+        "loop": true
+      },
+      "sit": {
+        "pattern": "assets/character/special/sit/sit_%02d.png",
+        "frames": 0,
+        "fps": 6,
+        "loop": true
+      },
+      "dance": {
+        "pattern": "assets/character/special/dance/dance_%02d.png",
+        "frames": 0,
+        "fps": 12,
+        "loop": true
+      }
+    }
+  },
+  "effects": {
+    "heart": {
+      "pattern": "assets/effects/heart/heart_%02d.png",
+      "frames": 0,
+      "fps": 12,
+      "loop": false
+    },
+    "star": {
+      "pattern": "assets/effects/star/star_%02d.png",
+      "frames": 0,
+      "fps": 12,
+      "loop": false
+    },
+    "smoke": {
+      "pattern": "assets/effects/smoke/smoke_%02d.png",
+      "frames": 0,
+      "fps": 10,
+      "loop": false
+    },
+    "zzz": {
+      "pattern": "assets/effects/zzz/zzz_%02d.png",
+      "frames": 0,
+      "fps": 6,
+      "loop": true
+    }
+  }
+}

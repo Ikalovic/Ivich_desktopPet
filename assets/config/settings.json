@@ -1,0 +1,19 @@
+{
+  "assetVersion": "0.1.0",
+  "characterName": "desktop-pet",
+  "canvas": {
+    "baseWidth": 512,
+    "baseHeight": 512,
+    "anchor": "bottom-center"
+  },
+  "naming": {
+    "frameDigits": 2,
+    "imageFormat": "png",
+    "audioFormat": "wav"
+  },
+  "exportGuidelines": {
+    "background": "transparent",
+    "suggestedScale": 1,
+    "origin": "bottom-center"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "defaultState": "idle",
+  "states": {
+    "idle": {
+      "animation": "idle",
+      "canTransitionTo": ["walk", "sleep", "drag", "fall", "peek", "sit", "dance"]
+    },
+    "walk": {
+      "animation": "walk",
+      "canTransitionTo": ["idle", "drag", "fall"]
+    },
+    "sleep": {
+      "animation": "sleep",
+      "canTransitionTo": ["idle"]
+    },
+    "drag": {
+      "animation": "drag",
+      "canTransitionTo": ["idle", "fall"]
+    },
+    "fall": {
+      "animation": "fall",
+      "canTransitionTo": ["idle", "cry"]
+    },
+    "peek": {
+      "animation": "special.peek",
+      "canTransitionTo": ["idle"]
+    },
+    "sit": {
+      "animation": "special.sit",
+      "canTransitionTo": ["idle", "sleep"]
+    },
+    "dance": {
+      "animation": "special.dance",
+      "canTransitionTo": ["idle"]
+    }
+  },
+  "emotions": ["happy", "angry", "cry", "shy", "surprise"]
+}
