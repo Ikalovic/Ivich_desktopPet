@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from PySide6.QtCore import QPoint, QTimer, Qt, Signal
-from PySide6.QtGui import QAction, QMouseEvent, QPixmap
+from PySide6.QtGui import QMouseEvent, QPixmap
 from PySide6.QtWidgets import QLabel, QMenu, QWidget
 
 from desktop_pet.config import AnimationConfig
@@ -23,6 +23,9 @@ class SpriteAnimator(QWidget):
     def play(self, frame_paths: list[Path], config: AnimationConfig) -> bool:
         pixmaps = [pixmap for path in frame_paths if not (pixmap := QPixmap(str(path))).isNull()]
         if not pixmaps:
+            self.stop()
+            self._frames = []
+            self._index = 0
             return False
         self._frames = pixmaps
         self._index = 0
@@ -121,12 +124,17 @@ class PetWindow(QWidget):
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
         if event.button() == Qt.MouseButton.LeftButton:
             was_dragging = self._is_dragging
+            release_pos = event.globalPosition().toPoint()
+            moved_too_far_for_click = (
+                self._press_pos is not None
+                and (release_pos - self._press_pos).manhattanLength() > self._DRAG_THRESHOLD_PX
+            )
             self._drag_offset = None
             self._press_pos = None
             self._is_dragging = False
             if was_dragging:
                 self.drag_finished.emit()
-            else:
+            elif not moved_too_far_for_click:
                 self.clicked.emit()
             event.accept()
             return
@@ -134,7 +142,6 @@ class PetWindow(QWidget):
 
     def _show_context_menu(self, global_pos: QPoint) -> None:
         menu = QMenu(self)
-        exit_action = QAction("退出", self)
+        exit_action = menu.addAction("退出")
         exit_action.triggered.connect(self.close)
-        menu.addAction(exit_action)
         menu.exec(global_pos)
