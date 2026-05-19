@@ -2,8 +2,8 @@
   "assetVersion": "0.1.0",
   "characterName": "desktop-pet",
   "canvas": {
-    "baseWidth": 512,
-    "baseHeight": 512,
+    "baseWidth": 256,
+    "baseHeight": 256,
     "anchor": "bottom-center"
   },
   "naming": {

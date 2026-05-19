@@ -6,6 +6,7 @@ venv/
 *.pyc
 *.pyo
 *.pyd
+*.egg-info/
 *.log
 *.tmp
 *.bak
