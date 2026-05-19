@@ -68,5 +68,35 @@ def test_state_machine_unknown_state_uses_configured_default_animation() -> None
     )
     machine = PetStateMachine(states, available_animations={"idle", "idle_anim"})
 
-    assert machine.force("unknown") == "unknown"
+    assert machine.force("unknown") == "idle"
+    assert machine.current_state == "idle"
+    assert machine.current_animation == "idle_anim"
+
+
+def test_state_machine_rejects_transition_to_unknown_state() -> None:
+    states = StateConfigSet(
+        default_state="idle",
+        states={
+            "idle": StateConfig("idle", "idle_anim", ("cry",)),
+        },
+    )
+    machine = PetStateMachine(states, available_animations={"idle_anim"})
+
+    assert machine.transition_to("cry") == "idle"
+    assert machine.current_state == "idle"
+    assert machine.current_animation == "idle_anim"
+
+
+def test_state_machine_keeps_default_animation_when_default_unavailable() -> None:
+    states = StateConfigSet(
+        default_state="idle",
+        states={
+            "idle": StateConfig("idle", "idle_anim", ("drag",)),
+            "drag": StateConfig("drag", "drag_anim", ("idle",)),
+        },
+    )
+    machine = PetStateMachine(states, available_animations=set())
+
+    assert machine.transition_to("drag") == "idle"
+    assert machine.current_state == "idle"
     assert machine.current_animation == "idle_anim"

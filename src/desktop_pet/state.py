@@ -14,22 +14,28 @@ class PetStateMachine:
         current = self._states.states.get(self.current_state)
         if current is None or target_state not in current.can_transition_to:
             return self.current_state
+        if target_state not in self._states.states:
+            return self._fallback_to_default()
         animation = self._animation_for(target_state)
         if animation not in self._available_animations:
-            self.current_state = self._states.default_state
-            self.current_animation = self._animation_for(self.current_state)
-            return self.current_state
+            return self._fallback_to_default()
         self.current_state = target_state
         self.current_animation = animation
         return self.current_state
 
     def force(self, target_state: str) -> str:
+        if target_state not in self._states.states:
+            return self._fallback_to_default()
         animation = self._animation_for(target_state)
         if animation not in self._available_animations:
-            target_state = self._states.default_state
-            animation = self._animation_for(target_state)
+            return self._fallback_to_default()
         self.current_state = target_state
         self.current_animation = animation
+        return self.current_state
+
+    def _fallback_to_default(self) -> str:
+        self.current_state = self._states.default_state
+        self.current_animation = self._animation_for(self.current_state)
         return self.current_state
 
     def _animation_for(self, state_name: str) -> str:
