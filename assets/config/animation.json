@@ -3,7 +3,7 @@
     "idle": {
       "pattern": "assets/character/idle/idle_%02d.png",
       "frames": 0,
-      "fps": 8,
+      "fps": 4,
       "loop": true
     },
     "walk": {
