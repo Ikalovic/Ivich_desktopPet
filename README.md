@@ -1,34 +1,35 @@
 # Ivich Desktop Pet
 
-Windows-first Python/PySide6 desktop pet using PNG sequence frames.
+这里是Desktop Pet Ivich , 依维希桌宠（个人oc）
 
-## Setup
+## 安装
 
 ```bash
 python -m pip install -e ".[dev]"
 ```
 
-## Run
+## 运行
 
 ```bash
 desktop-pet
 ```
 
-Alternatively, run the package module directly:
+也可以直接以模块方式运行：
 
 ```bash
 python -m desktop_pet
 ```
 
-## Test
+## 测试
 
 ```bash
 python -m pytest -q
 ```
 
-## Assets
+## 资源
 
-Animation assets are loaded from each animation's `pattern` in `assets/config/animation.json`,
-such as `assets/character/idle/idle_%02d.png` and nested character or effects patterns.
-Animation speed and looping are configured in `assets/config/animation.json`.
-When `frames` is `0`, the app scans sequential files from `01` until the first missing frame.
+动画资源会根据 `assets/config/animation.json` 中每个动画的 `pattern` 加载，例如
+`assets/character/idle/idle_%02d.png`，也支持角色子目录或特效目录中的嵌套路径。
+
+动画速度和是否循环同样在 `assets/config/animation.json` 中配置。
+当 `frames` 为 `0` 时，程序会从 `01` 开始按序扫描文件，直到遇到第一个缺失帧为止。
