@@ -108,6 +108,16 @@ def test_project_walk_animation_config_matches_existing_assets() -> None:
     assert frames
 
 
+def test_project_drag_still_animation_config_matches_existing_assets() -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    config = load_project_config(project_root)
+
+    assert config.states.states["drag_still"].animation == "drag_still"
+    frames = discover_frames(project_root, config.animations["drag_still"])
+
+    assert frames
+
+
 def test_load_project_config_reports_missing_file(tmp_path: Path) -> None:
     with pytest.raises(ConfigError, match="animation.json"):
         load_project_config(tmp_path)

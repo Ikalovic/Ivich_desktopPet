@@ -3,7 +3,7 @@
   "states": {
     "idle": {
       "animation": "idle",
-      "canTransitionTo": ["walk", "sleep", "drag", "fall", "peek", "sit", "dance"]
+      "canTransitionTo": ["walk", "sleep", "drag", "drag_still", "fall", "peek", "sit", "dance"]
     },
     "sleep": {
       "animation": "sleep",
@@ -16,6 +16,10 @@
     "drag": {
       "animation": "drag",
       "canTransitionTo": ["idle", "fall"]
+    },
+    "drag_still": {
+      "animation": "drag_still",
+      "canTransitionTo": ["idle", "drag", "fall"]
     },
     "fall": {
       "animation": "fall",

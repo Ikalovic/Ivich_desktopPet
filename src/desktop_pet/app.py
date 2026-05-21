@@ -46,6 +46,7 @@ class DesktopPetApp:
         self._idle_elapsed_ms = 0
         self.walk = WalkController()
         self.window.drag_started.connect(self._handle_drag_started)
+        self.window.drag_still_requested.connect(self.handle_drag_still_started)
         self.window.drag_finished.connect(lambda: self.change_state("idle", force=True))
         self.window.clicked.connect(self.handle_click)
 
@@ -235,6 +236,12 @@ class DesktopPetApp:
         self._stop_walk_motion_timer()
         self.walk.stop()
         self.change_state("drag", force=True)
+
+    def handle_drag_still_started(self) -> None:
+        self._idle_elapsed_ms = 0
+        self._stop_walk_motion_timer()
+        self.walk.stop()
+        self.change_state("drag_still", force=True)
 
     def handle_click(self) -> None:
         self._idle_elapsed_ms = 0

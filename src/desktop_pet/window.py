@@ -3,14 +3,18 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from PySide6.QtCore import QPoint, QTimer, Qt, Signal
+from PySide6.QtCore import QPoint, QElapsedTimer, QTimer, Qt, Signal
 from PySide6.QtGui import QMouseEvent, QPixmap, QTransform
 from PySide6.QtWidgets import QLabel, QMenu, QWidget
 
+from desktop_pet.animation_cache import FrameCache
 from desktop_pet.config import AnimationConfig
+from desktop_pet.interaction import DragBehaviorTracker, classify_drag_behavior
 
 
 LOGGER = logging.getLogger(__name__)
+_DRAG_DIRECTION_WINDOW_MS = 150
+_DRAG_DIRECTION_MARGIN_PX = 3
 
 
 class SpriteAnimator(QWidget):
@@ -21,6 +25,10 @@ class SpriteAnimator(QWidget):
         self._timer = QTimer(self)
         self._timer.timeout.connect(self._next_frame)
         self._frames: list[QPixmap] = []
+        self._frame_cache: FrameCache[QPixmap] = FrameCache(
+            load_frame=self._load_pixmap,
+            mirror_frame=self._mirror_pixmap,
+        )
         self._index = 0
         self._loop = True
 
@@ -31,15 +39,11 @@ class SpriteAnimator(QWidget):
         *,
         mirror_horizontal: bool = False,
     ) -> bool:
-        pixmaps: list[QPixmap] = []
-        for path in frame_paths:
-            pixmap = QPixmap(str(path))
-            if pixmap.isNull():
-                LOGGER.warning("Animation %s could not load frame: %s", config.name, path)
-            else:
-                if mirror_horizontal:
-                    pixmap = pixmap.transformed(QTransform().scale(-1, 1))
-                pixmaps.append(pixmap)
+        pixmaps = self._frame_cache.get(
+            frame_paths,
+            config,
+            mirror_horizontal=mirror_horizontal,
+        )
         if not pixmaps:
             self.stop()
             self._frames = []
@@ -56,6 +60,16 @@ class SpriteAnimator(QWidget):
     def stop(self) -> None:
         self._timer.stop()
 
+    def _load_pixmap(self, path: Path) -> QPixmap | None:
+        pixmap = QPixmap(str(path))
+        if pixmap.isNull():
+            LOGGER.warning("Could not load frame: %s", path)
+            return None
+        return pixmap
+
+    def _mirror_pixmap(self, pixmap: QPixmap) -> QPixmap:
+        return pixmap.transformed(QTransform().scale(-1, 1))
+
     def _next_frame(self) -> None:
         if not self._frames:
             return
@@ -71,6 +85,7 @@ class SpriteAnimator(QWidget):
 
 class PetWindow(QWidget):
     drag_started = Signal()
+    drag_still_requested = Signal()
     drag_finished = Signal()
     clicked = Signal()
 
@@ -83,7 +98,15 @@ class PetWindow(QWidget):
         self._label.setGeometry(0, 0, width, height)
         self._drag_offset: QPoint | None = None
         self._press_pos: QPoint | None = None
+        self._last_drag_pos: QPoint | None = None
         self._is_dragging = False
+        self._drag_behavior: str | None = None
+        self._drag_clock = QElapsedTimer()
+        self._drag_tracker = DragBehaviorTracker(
+            window_ms=_DRAG_DIRECTION_WINDOW_MS,
+            threshold_px=self._DRAG_THRESHOLD_PX,
+            direction_margin_px=_DRAG_DIRECTION_MARGIN_PX,
+        )
 
         self.setFixedSize(width, height)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
@@ -110,8 +133,12 @@ class PetWindow(QWidget):
     def mousePressEvent(self, event: QMouseEvent) -> None:
         if event.button() == Qt.MouseButton.LeftButton:
             self._press_pos = event.globalPosition().toPoint()
+            self._last_drag_pos = self._press_pos
             self._drag_offset = self._press_pos - self.frameGeometry().topLeft()
             self._is_dragging = False
+            self._drag_behavior = None
+            self._drag_tracker.reset()
+            self._drag_clock.start()
             event.accept()
             return
         if event.button() == Qt.MouseButton.RightButton:
@@ -127,13 +154,26 @@ class PetWindow(QWidget):
             and event.buttons() & Qt.MouseButton.LeftButton
         ):
             current_pos = event.globalPosition().toPoint()
+            total_delta = current_pos - self._press_pos
+            if not self._is_dragging and total_delta.manhattanLength() <= self._DRAG_THRESHOLD_PX:
+                event.accept()
+                return
             if not self._is_dragging:
-                distance = (current_pos - self._press_pos).manhattanLength()
-                if distance <= self._DRAG_THRESHOLD_PX:
-                    event.accept()
-                    return
                 self._is_dragging = True
-                self.drag_started.emit()
+
+            step_delta = current_pos - (self._last_drag_pos or self._press_pos)
+            self._last_drag_pos = current_pos
+            next_behavior = self._drag_tracker.update(
+                delta_x=step_delta.x(),
+                delta_y=step_delta.y(),
+                timestamp_ms=self._drag_clock.elapsed(),
+            )
+            if next_behavior is not None and next_behavior != self._drag_behavior:
+                self._drag_behavior = next_behavior
+                if next_behavior == "drag":
+                    self.drag_started.emit()
+                else:
+                    self.drag_still_requested.emit()
             self.move(current_pos - self._drag_offset)
             event.accept()
             return
@@ -143,17 +183,24 @@ class PetWindow(QWidget):
         if event.button() == Qt.MouseButton.LeftButton:
             was_dragging = self._is_dragging
             release_pos = event.globalPosition().toPoint()
-            moved_too_far_for_click = (
-                self._press_pos is not None
-                and (release_pos - self._press_pos).manhattanLength() > self._DRAG_THRESHOLD_PX
-            )
+            drag_behavior = "drag_still"
+            if self._press_pos is not None:
+                delta = release_pos - self._press_pos
+                drag_behavior = classify_drag_behavior(
+                    delta_x=delta.x(),
+                    delta_y=delta.y(),
+                    threshold_px=self._DRAG_THRESHOLD_PX,
+                )
             self._drag_offset = None
             self._press_pos = None
+            self._last_drag_pos = None
             self._is_dragging = False
+            self._drag_behavior = None
+            self._drag_tracker.reset()
             if was_dragging:
                 self.drag_finished.emit()
-            elif not moved_too_far_for_click:
-                self.clicked.emit()
+            elif drag_behavior == "drag_still":
+                self.drag_still_requested.emit()
             event.accept()
             return
         super().mouseReleaseEvent(event)

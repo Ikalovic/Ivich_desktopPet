@@ -22,18 +22,26 @@ def make_app(animator: RecordingAnimator) -> DesktopPetApp:
     app = object.__new__(DesktopPetApp)
     idle = AnimationConfig("idle", "idle_%02d.png", 1, 8, True)
     drag = AnimationConfig("drag", "drag_%02d.png", 1, 8, True)
+    drag_still = AnimationConfig("drag_still", "drag_still_%02d.png", 1, 8, True)
     sleep = AnimationConfig("sleep", "sleep_%02d.png", 1, 8, True)
     walk = AnimationConfig("walk", "walk_%02d.png", 1, 8, True)
     app.config = type(
         "Config",
         (),
         {
-            "animations": {"idle": idle, "drag": drag, "sleep": sleep, "walk": walk},
+            "animations": {
+                "idle": idle,
+                "drag": drag,
+                "drag_still": drag_still,
+                "sleep": sleep,
+                "walk": walk,
+            },
             "states": StateConfigSet(
                 default_state="idle",
                 states={
-                    "idle": StateConfig("idle", "idle", ("drag", "sleep", "walk")),
+                    "idle": StateConfig("idle", "idle", ("drag", "drag_still", "sleep", "walk")),
                     "drag": StateConfig("drag", "drag", ("idle",)),
+                    "drag_still": StateConfig("drag_still", "drag_still", ("idle",)),
                     "sleep": StateConfig("sleep", "sleep", ("idle",)),
                     "walk": StateConfig("walk", "walk", ("idle",)),
                 },
@@ -43,10 +51,11 @@ def make_app(animator: RecordingAnimator) -> DesktopPetApp:
     app.frames_by_animation = {
         "idle": [Path("idle_01.png")],
         "drag": [Path("drag_01.png")],
+        "drag_still": [Path("drag_still_01.png")],
         "sleep": [Path("sleep_01.png")],
         "walk": [Path("walk_01.png")],
     }
-    app.state = PetStateMachine(app.config.states, {"idle", "drag", "sleep", "walk"})
+    app.state = PetStateMachine(app.config.states, {"idle", "drag", "drag_still", "sleep", "walk"})
     app.animator = animator
     app._current_animation_name = None
     return app
@@ -257,6 +266,19 @@ def test_walk_step_returns_to_idle_when_random_duration_ends() -> None:
 
     assert app.state.current_state == "idle"
     assert [call[1].name for call in animator.calls] == ["idle"]
+
+
+def test_handle_drag_still_started_switches_to_drag_still() -> None:
+    animator = RecordingAnimator([])
+    app = make_app(animator)
+    app._idle_elapsed_ms = 100
+    app._stop_walk_motion_timer = lambda: None
+    app.walk = type("StaticWalker", (), {"stop": lambda self: None})()
+
+    app.handle_drag_still_started()
+
+    assert app.state.current_state == "drag_still"
+    assert [call[1].name for call in animator.calls] == ["drag_still"]
 
 
 def test_idle_time_accumulates_across_walk_before_sleep() -> None:

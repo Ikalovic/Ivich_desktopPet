@@ -24,6 +24,12 @@
       "fps": 12,
       "loop": true
     },
+    "drag_still": {
+      "pattern": "assets/character/drag_still/drag_still_%02d.png",
+      "frames": 0,
+      "fps": 8,
+      "loop": true
+    },
     "fall": {
       "pattern": "assets/character/fall/fall_%02d.png",
       "frames": 0,
