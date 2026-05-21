@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 from desktop_pet.config import ConfigError, load_project_config
+from desktop_pet.sprites import discover_frames
 
 
 def write_json(path: Path, value: object) -> None:
@@ -68,6 +69,43 @@ def test_load_project_config_parses_effects_without_breaking_character_names(tmp
     assert config.animations["idle"].pattern == "assets/character/idle/idle_%02d.png"
     assert config.animations["special.peek"].pattern == "assets/character/special/peek_%02d.png"
     assert config.animations["effects.heart"].pattern == "assets/effects/heart/heart_%02d.png"
+
+
+def test_load_project_config_parses_walk_animation_and_state(tmp_path: Path) -> None:
+    write_json(
+        tmp_path / "assets/config/animation.json",
+        {
+            "character": {
+                "idle": {"pattern": "assets/character/idle/idle_%02d.png"},
+                "walk": {"pattern": "assets/character/walk/walk_left_%02d.png"},
+            }
+        },
+    )
+    write_json(
+        tmp_path / "assets/config/state.json",
+        {
+            "defaultState": "idle",
+            "states": {
+                "idle": {"animation": "idle", "canTransitionTo": ["walk"]},
+                "walk": {"animation": "walk", "canTransitionTo": ["idle"]},
+            },
+        },
+    )
+    write_json(tmp_path / "assets/config/settings.json", {"canvas": {}})
+
+    config = load_project_config(tmp_path)
+
+    assert config.animations["walk"].pattern == "assets/character/walk/walk_left_%02d.png"
+    assert config.states.states["walk"].animation == "walk"
+
+
+def test_project_walk_animation_config_matches_existing_assets() -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    config = load_project_config(project_root)
+
+    frames = discover_frames(project_root, config.animations["walk"])
+
+    assert frames
 
 
 def test_load_project_config_reports_missing_file(tmp_path: Path) -> None:

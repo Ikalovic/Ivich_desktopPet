@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 
 from PySide6.QtCore import QPoint, QTimer, Qt, Signal
-from PySide6.QtGui import QMouseEvent, QPixmap
+from PySide6.QtGui import QMouseEvent, QPixmap, QTransform
 from PySide6.QtWidgets import QLabel, QMenu, QWidget
 
 from desktop_pet.config import AnimationConfig
@@ -24,13 +24,21 @@ class SpriteAnimator(QWidget):
         self._index = 0
         self._loop = True
 
-    def play(self, frame_paths: list[Path], config: AnimationConfig) -> bool:
+    def play(
+        self,
+        frame_paths: list[Path],
+        config: AnimationConfig,
+        *,
+        mirror_horizontal: bool = False,
+    ) -> bool:
         pixmaps: list[QPixmap] = []
         for path in frame_paths:
             pixmap = QPixmap(str(path))
             if pixmap.isNull():
                 LOGGER.warning("Animation %s could not load frame: %s", config.name, path)
             else:
+                if mirror_horizontal:
+                    pixmap = pixmap.transformed(QTransform().scale(-1, 1))
                 pixmaps.append(pixmap)
         if not pixmaps:
             self.stop()

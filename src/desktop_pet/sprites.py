@@ -33,4 +33,6 @@ def discover_frames(project_root: Path, config: AnimationConfig) -> list[Path]:
 
 
 def _frame_path(project_root: Path, pattern: str, index: int) -> Path:
+    if "%" not in pattern:
+        return project_root / pattern
     return project_root / (pattern % index)

@@ -5,12 +5,12 @@
       "animation": "idle",
       "canTransitionTo": ["walk", "sleep", "drag", "fall", "peek", "sit", "dance"]
     },
-    "walk": {
-      "animation": "walk",
-      "canTransitionTo": ["idle", "drag", "fall"]
-    },
     "sleep": {
       "animation": "sleep",
+      "canTransitionTo": ["idle"]
+    },
+    "walk": {
+      "animation": "walk",
       "canTransitionTo": ["idle"]
     },
     "drag": {
