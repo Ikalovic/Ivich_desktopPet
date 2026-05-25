@@ -19,6 +19,34 @@ class DragSample:
     timestamp_ms: int
 
 
+@dataclass(frozen=True)
+class DragBehavior:
+    name: str
+    mirror_horizontal: bool = False
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, str):
+            return self.name == other
+        if isinstance(other, DragBehavior):
+            return (
+                self.name == other.name
+                and self.mirror_horizontal == other.mirror_horizontal
+            )
+        return NotImplemented
+
+
+def should_emit_drag_behavior(
+    *,
+    current_name: str | None,
+    current_mirror_horizontal: bool | None,
+    next_behavior: DragBehavior,
+) -> bool:
+    return (
+        next_behavior.name != current_name
+        or next_behavior.mirror_horizontal != current_mirror_horizontal
+    )
+
+
 class DragBehaviorTracker:
     def __init__(
         self,
@@ -35,7 +63,7 @@ class DragBehaviorTracker:
     def reset(self) -> None:
         self._samples.clear()
 
-    def update(self, *, delta_x: int, delta_y: int, timestamp_ms: int) -> str | None:
+    def update(self, *, delta_x: int, delta_y: int, timestamp_ms: int) -> DragBehavior | None:
         self._samples.append(DragSample(delta_x, delta_y, timestamp_ms))
         cutoff_ms = timestamp_ms - self._window_ms
         while self._samples and self._samples[0].timestamp_ms < cutoff_ms:
@@ -46,5 +74,5 @@ class DragBehaviorTracker:
         if abs(window_delta_x) + abs(window_delta_y) <= self._threshold_px:
             return None
         if abs(window_delta_x) >= abs(window_delta_y) + self._direction_margin_px:
-            return "drag"
-        return "drag_still"
+            return DragBehavior("drag", mirror_horizontal=window_delta_x > 0)
+        return DragBehavior("drag_still")

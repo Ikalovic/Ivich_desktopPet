@@ -231,11 +231,11 @@ class DesktopPetApp:
         self._idle_elapsed_ms = 0
         return self.change_state("sleep")
 
-    def _handle_drag_started(self) -> None:
+    def _handle_drag_started(self, mirror_horizontal: bool = False) -> None:
         self._idle_elapsed_ms = 0
         self._stop_walk_motion_timer()
         self.walk.stop()
-        self.change_state("drag", force=True)
+        self.change_state("drag", force=True, mirror_horizontal=mirror_horizontal)
 
     def handle_drag_still_started(self) -> None:
         self._idle_elapsed_ms = 0

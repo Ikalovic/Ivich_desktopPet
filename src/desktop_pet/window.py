@@ -9,7 +9,11 @@ from PySide6.QtWidgets import QLabel, QMenu, QWidget
 
 from desktop_pet.animation_cache import FrameCache
 from desktop_pet.config import AnimationConfig
-from desktop_pet.interaction import DragBehaviorTracker, classify_drag_behavior
+from desktop_pet.interaction import (
+    DragBehaviorTracker,
+    classify_drag_behavior,
+    should_emit_drag_behavior,
+)
 
 
 LOGGER = logging.getLogger(__name__)
@@ -84,7 +88,7 @@ class SpriteAnimator(QWidget):
 
 
 class PetWindow(QWidget):
-    drag_started = Signal()
+    drag_started = Signal(bool)
     drag_still_requested = Signal()
     drag_finished = Signal()
     clicked = Signal()
@@ -101,6 +105,7 @@ class PetWindow(QWidget):
         self._last_drag_pos: QPoint | None = None
         self._is_dragging = False
         self._drag_behavior: str | None = None
+        self._drag_mirror_horizontal: bool | None = None
         self._drag_clock = QElapsedTimer()
         self._drag_tracker = DragBehaviorTracker(
             window_ms=_DRAG_DIRECTION_WINDOW_MS,
@@ -137,6 +142,7 @@ class PetWindow(QWidget):
             self._drag_offset = self._press_pos - self.frameGeometry().topLeft()
             self._is_dragging = False
             self._drag_behavior = None
+            self._drag_mirror_horizontal = None
             self._drag_tracker.reset()
             self._drag_clock.start()
             event.accept()
@@ -168,10 +174,15 @@ class PetWindow(QWidget):
                 delta_y=step_delta.y(),
                 timestamp_ms=self._drag_clock.elapsed(),
             )
-            if next_behavior is not None and next_behavior != self._drag_behavior:
-                self._drag_behavior = next_behavior
-                if next_behavior == "drag":
-                    self.drag_started.emit()
+            if next_behavior is not None and should_emit_drag_behavior(
+                current_name=self._drag_behavior,
+                current_mirror_horizontal=self._drag_mirror_horizontal,
+                next_behavior=next_behavior,
+            ):
+                self._drag_behavior = next_behavior.name
+                self._drag_mirror_horizontal = next_behavior.mirror_horizontal
+                if next_behavior.name == "drag":
+                    self.drag_started.emit(next_behavior.mirror_horizontal)
                 else:
                     self.drag_still_requested.emit()
             self.move(current_pos - self._drag_offset)
@@ -196,6 +207,7 @@ class PetWindow(QWidget):
             self._last_drag_pos = None
             self._is_dragging = False
             self._drag_behavior = None
+            self._drag_mirror_horizontal = None
             self._drag_tracker.reset()
             if was_dragging:
                 self.drag_finished.emit()

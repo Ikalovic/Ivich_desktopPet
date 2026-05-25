@@ -19,9 +19,9 @@
       "loop": true
     },
     "drag": {
-      "pattern": "assets/character/drag/drag_%02d.png",
+      "pattern": "assets/character/drag/drag_left_%02d.png",
       "frames": 0,
-      "fps": 12,
+      "fps": 8,
       "loop": true
     },
     "drag_still": {

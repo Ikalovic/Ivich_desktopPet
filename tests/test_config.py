@@ -118,6 +118,25 @@ def test_project_drag_still_animation_config_matches_existing_assets() -> None:
     assert frames
 
 
+def test_project_drag_animation_config_matches_left_drag_assets() -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    config = load_project_config(project_root)
+
+    assert config.animations["drag"].pattern == "assets/character/drag/drag_left_%02d.png"
+    frames = discover_frames(project_root, config.animations["drag"])
+
+    assert [path.name for path in frames] == [
+        "drag_left_01.png",
+        "drag_left_02.png",
+        "drag_left_03.png",
+        "drag_left_04.png",
+        "drag_left_05.png",
+        "drag_left_06.png",
+        "drag_left_07.png",
+        "drag_left_08.png",
+    ]
+
+
 def test_load_project_config_reports_missing_file(tmp_path: Path) -> None:
     with pytest.raises(ConfigError, match="animation.json"):
         load_project_config(tmp_path)

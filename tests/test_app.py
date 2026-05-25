@@ -281,6 +281,34 @@ def test_handle_drag_still_started_switches_to_drag_still() -> None:
     assert [call[1].name for call in animator.calls] == ["drag_still"]
 
 
+def test_handle_right_drag_started_mirrors_left_drag_animation() -> None:
+    animator = RecordingAnimator([])
+    app = make_app(animator)
+    app._idle_elapsed_ms = 100
+    app._stop_walk_motion_timer = lambda: None
+    app.walk = type("StaticWalker", (), {"stop": lambda self: None})()
+
+    app._handle_drag_started(mirror_horizontal=True)
+
+    assert app.state.current_state == "drag"
+    assert [call[1].name for call in animator.calls] == ["drag"]
+    assert [call[2] for call in animator.calls] == [True]
+
+
+def test_handle_left_drag_started_uses_left_drag_animation_without_mirroring() -> None:
+    animator = RecordingAnimator([])
+    app = make_app(animator)
+    app._idle_elapsed_ms = 100
+    app._stop_walk_motion_timer = lambda: None
+    app.walk = type("StaticWalker", (), {"stop": lambda self: None})()
+
+    app._handle_drag_started(mirror_horizontal=False)
+
+    assert app.state.current_state == "drag"
+    assert [call[1].name for call in animator.calls] == ["drag"]
+    assert [call[2] for call in animator.calls] == [False]
+
+
 def test_idle_time_accumulates_across_walk_before_sleep() -> None:
     animator = RecordingAnimator([])
     app = make_app(animator)
